@@ -41,7 +41,7 @@ function renderList() {
     const del = document.createElement("button");
     del.className = "btn-del";
     del.title = "Delete note";
-    del.textContent = "🗑";
+    del.innerHTML = '<i class="fa-solid fa-delete-left"></i>';
     del.addEventListener("click", () => {
       notes.splice(idx, 1);
       renderList();
