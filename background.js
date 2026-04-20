@@ -5,25 +5,18 @@ chrome.runtime.onInstalled.addListener(() => {
 // Fire every time a tab finishes loading
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (changeInfo.status !== "complete") return;
-  if (!tab.url || tab.url.startsWith("chrome://")) return;
+  if (!tab.url || tab.url.startsWith("chrome://") || tab.url.startsWith("chrome-extension://")) return;
 
   let host;
   try { host = new URL(tab.url).hostname; }
   catch { return; }
 
-  // Check if notes exist for this host
   const data = await chrome.storage.local.get(host);
-  const notes = data[host]?.notes;
+  const notes = data[host]?.notes?.filter(n => n.text.trim() !== "");
   if (!notes?.length) return;
 
-  // Inject content script only when notes exist
   try {
-    await chrome.scripting.executeScript({
-      target: { tabId },
-      files: ["content.js"]
-    });
-
-    // Pass notes data into the page
+    await chrome.scripting.executeScript({ target: { tabId }, files: ["content.js"] });
     await chrome.scripting.executeScript({
       target: { tabId },
       func: (notesData) => {
@@ -33,7 +26,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
       args: [notes]
     });
   } catch (err) {
-    console.warn("Injection failed:", err.message);
+    console.warn("Injection skipped:", err.message);
   }
 });
 
